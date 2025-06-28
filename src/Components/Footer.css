@@ -1,0 +1,27 @@
+.footer {
+  background-color: #f3f4f6; /* Tailwind gray-100 */
+  padding: 1rem 2rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #4b5563; /* Tailwind gray-700 */
+  margin-top: auto;
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-link {
+  color: #9333ea; /* Tailwind purple-600 */
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.contact-link:hover {
+  text-decoration: underline;
+}
