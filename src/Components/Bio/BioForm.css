@@ -1,0 +1,88 @@
+.bio-container {
+  max-width: 800px;
+  margin: auto;
+  padding: 2rem;
+  background: #fffafc;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.bio-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #e91e63;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.bio-steps {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.bio-step {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #666;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bio-step.active {
+  background: linear-gradient(to right, #ff6b6b, #f06595);
+  color: white;
+}
+
+.bio-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.bio-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bio-input-group input,
+.bio-input-group textarea {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.bio-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+}
+
+.bio-buttons button {
+  padding: 0.6rem 1.5rem;
+  border: none;
+  background: linear-gradient(to right, #ff6b6b, #f06595);
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.bio-input-group select {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  background-color: #fff;
+  color: #333;
+}
+.bio-buttons button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}

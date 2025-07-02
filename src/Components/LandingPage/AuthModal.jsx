@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { X } from 'lucide-react';
-import './AuthModal.css'; // Import styles here
+import './AuthModal.css'; 
 import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "../firebase";
+import { auth, googleProvider , db } from "../../Firebase";
+import { useNavigate } from "react-router-dom";
 
 
 const AuthModal = ({ isOpen, mode, onClose, onSubmit }) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -30,17 +33,38 @@ const AuthModal = ({ isOpen, mode, onClose, onSubmit }) => {
     }
   };
 
+
   const handleGoogleLogin = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log("User signed in with Google:", result.user);
-      alert("Signed in with Google!");
-      onClose(); // close modal after success
-    } catch (error) {
-      console.error("Google sign-in error:", error);
-      alert(error.message);
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+
+    console.log("User signed in with Google:", user);
+    alert("Signed in with Google!");
+
+    // Check if user profile exists in Firestore
+    const userDocRef = doc(db, "users", user.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      // ✅ Profile exists → go to /new
+      navigate("/");
+    } else {
+      // 🚨 No profile → create user record and go to /bio
+      await setDoc(userDocRef, {
+        email: user.email,
+        createdAt: new Date(),
+        bio: null,
+      });
+      navigate("/bio");
     }
-  };
+
+    onClose(); // close modal
+  } catch (error) {
+    console.error("Google sign-in error:", error);
+    alert(error.message);
+  }
+};
 
   return (
     <div className="auth-backdrop" onClick={handleBackdropClick}>
@@ -102,3 +126,5 @@ const AuthModal = ({ isOpen, mode, onClose, onSubmit }) => {
 };
 
 export default AuthModal;
+
+

@@ -1,0 +1,41 @@
+.settings-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #ffe4e6, #fff1f2);
+  padding-bottom: 5rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--romantic-rose, #e11d48);
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+}
+
+.setting-label {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.setting-sub {
+  font-size: 0.875rem;
+  color: #6b7280;
+}

@@ -1,0 +1,156 @@
+.match-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #FFB6C1, #E6E6FA, #F0FFF0);
+  padding-bottom: 6rem;
+}
+
+.match-header {
+  text-align: center;
+  padding: 2rem 1rem 1rem;
+}
+
+.match-header h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.match-header p {
+  color: #555;
+  font-weight: 500;
+}
+
+.match-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.match-card {
+  background: white;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.match-card:hover {
+  transform: translateY(-5px);
+}
+
+.match-img-container {
+  position: relative;
+}
+
+.match-img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.match-score {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  font-weight: bold;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.match-content {
+  padding: 1.25rem;
+}
+
+.match-content h3 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #222;
+}
+
+.match-location {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  color: #555;
+  margin: 0.5rem 0;
+}
+
+.match-bio {
+  font-size: 0.95rem;
+  color: #444;
+  margin-bottom: 0.75rem;
+}
+
+.match-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.match-tag {
+  background: rgba(255, 182, 193, 0.2);
+  color: #FF69B4;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.match-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.pass-btn,
+.like-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: all 0.3s ease;
+}
+
+.pass-btn {
+  background: #fff;
+  border: 1px solid #ddd;
+  color: #e53935;
+}
+
+.pass-btn:hover {
+  background: #ffebee;
+}
+
+.like-btn {
+  background: #FFB6C1;
+  color: white;
+  border: none;
+}
+
+.like-btn:hover {
+  background: #FF69B4;
+}
+
+.view-profile {
+  display: block;
+  text-align: center;
+  font-weight: 500;
+  color: #FF69B4;
+  margin-top: 0.5rem;
+  text-decoration: underline;
+}
