@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 export default function Settings() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const [notifications, setNotifications] = useState({
     newMatches: true,
@@ -42,125 +42,124 @@ export default function Settings() {
   };
 
   const handleLogout = async () => {
-  try {
-    const auth = getAuth();
-    await signOut(auth);
-    navigate("/"); // redirect to landing page
-  } catch (error) {
-    console.error("Logout error:", error);
-  }
-};
+    try {
+      const auth = getAuth();
+      await signOut(auth);
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
+  const ToggleSwitch = ({ checked, onChange }) => (
+    <button
+      className={`toggle-switch ${checked ? 'active' : ''}`}
+      onClick={() => onChange(!checked)}
+      aria-pressed={checked}
+    />
+  );
 
   return (
     <div className="settings-wrapper">
-      <div className="container mx-auto px-4 pt-8">
-        <div className="text-center mb-8">
-          <Heart className="w-12 h-12 text-romantic-rose mx-auto mb-4 animate-heart-beat" />
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Settings</h1>
-          <p className="text-gray-600">Customize your MatchMate experience</p>
+      <div className="container">
+        <div className="settings-header">
+          {/* <Heart className="heart-icon" /> */}
+          <h1 className="settings-title">Settings</h1>
+          <p className="settings-subtitle">Customize your MatchMate experience</p>
         </div>
 
-        <div className="max-w-2xl mx-auto space-y-6">
+        <div className="settings-content">
           {/* Profile Settings */}
-          <div className="card romantic-card p-6">
+          <div className="romantic-card">
             <div className="section-header">
               <User className="icon" />
               <h2 className="section-title">Profile Settings</h2>
             </div>
 
-            <div className="space-y-4">
-              <button className="w-full flex items-center justify-start romantic-button">
-                <Edit3 className="w-4 h-4 mr-3" />
+            <div>
+              <button className="profile-edit-button">
+                <Edit3 className="button-icon" />
                 Edit Profile
               </button>
-              <p className="text-sm text-gray-600 px-3">
-                Update your photos, bio, interests, and preferences
+              <p className="profile-description">
+                Update your photos, bio, interests, and preferences to find your perfect match
               </p>
             </div>
           </div>
 
           {/* Notification Settings */}
-          <div className="card romantic-card p-6">
+          <div className="romantic-card">
             <div className="section-header">
               <Bell className="icon" />
               <h2 className="section-title">Notifications</h2>
             </div>
 
             {[
-              ["New Matches", "newMatches"],
-              ["Messages", "messages"],
-              ["Likes", "likes"],
-              ["Email Notifications", "email"],
-            ].map(([label, key]) => (
+              ["New Matches", "newMatches", "Get notified when someone likes you back"],
+              ["Messages", "messages", "Receive alerts for new messages"],
+              ["Likes", "likes", "Know when someone likes your profile"],
+              ["Email Notifications", "email", "Receive updates via email"],
+            ].map(([label, key, description]) => (
               <div className="setting-row" key={key}>
-                <div>
+                <div className="setting-info">
                   <p className="setting-label">{label}</p>
-                  <p className="setting-sub">
-                    Get notified about {label.toLowerCase()}
-                  </p>
+                  <p className="setting-sub">{description}</p>
                 </div>
-                <input
-                  type="checkbox"
+                <ToggleSwitch
                   checked={notifications[key]}
-                  onChange={(e) =>
-                    handleNotificationChange(key, e.target.checked)
-                  }
+                  onChange={(value) => handleNotificationChange(key, value)}
                 />
               </div>
             ))}
           </div>
 
           {/* Privacy Settings */}
-          <div className="card romantic-card p-6">
+          <div className="romantic-card">
             <div className="section-header">
               <Shield className="icon" />
-              <h2 className="section-title">Privacy</h2>
+              <h2 className="section-title">Privacy & Visibility</h2>
             </div>
 
             {[
-              ["Show Age", "showAge"],
-              ["Show Location", "showLocation"],
-              ["Show Last Seen", "showLastSeen"],
-            ].map(([label, key]) => (
+              ["Show Age", "showAge", "Display your age on your profile"],
+              ["Show Location", "showLocation", "Let others see your location"],
+              ["Show Last Seen", "showLastSeen", "Display when you were last active"],
+            ].map(([label, key, description]) => (
               <div className="setting-row" key={key}>
-                <div>
+                <div className="setting-info">
                   <p className="setting-label">{label}</p>
-                  <p className="setting-sub">
-                    Control who sees your {label.toLowerCase()}
-                  </p>
+                  <p className="setting-sub">{description}</p>
                 </div>
-                <input
-                  type="checkbox"
+                <ToggleSwitch
                   checked={privacy[key]}
-                  onChange={(e) =>
-                    handlePrivacyChange(key, e.target.checked)
-                  }
+                  onChange={(value) => handlePrivacyChange(key, value)}
                 />
               </div>
             ))}
           </div>
 
           {/* Account Actions */}
-          <div className="card romantic-card p-6 space-y-4">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-start border border-gray-300 hover:bg-gray-50 p-2 rounded"
-            >
-              <LogOut className="w-4 h-4 mr-3" />
-              Log Out
-            </button>
+          <div className="romantic-card">
+            <div className="section-header">
+              <User className="icon" />
+              <h2 className="section-title">Account Actions</h2>
+            </div>
+            
+            <div className="action-buttons">
+              <button onClick={handleLogout} className="logout-button">
+                <LogOut className="button-icon" />
+                Log Out
+              </button>
 
-            <button
-              onClick={handleDeleteAccount}
-              className="w-full flex items-center justify-start border border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 p-2 rounded"
-            >
-              <Trash2 className="w-4 h-4 mr-3" />
-              Delete Account
-            </button>
+              <button onClick={handleDeleteAccount} className="delete-button">
+                <Trash2 className="button-icon" />
+                Delete Account
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
+

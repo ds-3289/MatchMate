@@ -7,7 +7,7 @@ export default function Navigation() {
   const location = useLocation();
 
   const navItems = [
-    { path: "/", icon: Heart, label: "Matches" },
+    { path: "/new", icon: Heart, label: "Matches" },
     { path: "/swipe", icon: Heart, label: "Discover" },
     { path: "/chat", icon: MessageSquare, label: "Chat" },
     { path: "/settings", icon: Settings, label: "Settings" },

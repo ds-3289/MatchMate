@@ -20,7 +20,7 @@ const checkUserProfile = async (uid) => {
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
-      navigate("/");
+      navigate("/new");
     } else {
       navigate("/bio");
     }

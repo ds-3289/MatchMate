@@ -13,7 +13,7 @@ export default function MatchesRoutes() {
     <>
       <Navigation />
       <Routes>
-        <Route path="/" element={<NewPage />} />
+        <Route path="/new" element={<NewPage />} />
         <Route path="swipe" element={<SwipeUI />} />
         <Route path="chat" element={<Chat />} />
         <Route path="settings" element={<Settings />} />

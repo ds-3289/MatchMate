@@ -5,6 +5,31 @@ import {
   Heart, MessageSquare, Music, Book, Eye, Ruler
 } from "lucide-react";
 import "./ProfileView.css";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../Firebase";
+
+// Reuse the same placeholder images array
+const placeholderImages = [
+  "https://plus.unsplash.com/premium_vector-1739269049762-7cc7ee26c327?q=80&w=1026&auto=format&fit=crop&ixlib=rb-4.1.0",
+  "https://plus.unsplash.com/premium_vector-1739921187649-dadadabc1e04?q=80&w=715&auto=format&fit=crop&ixlib=rb-4.1.0",
+  "https://images.unsplash.com/vector-1746201741369-91ae3307d64b?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0",
+  "https://plus.unsplash.com/premium_vector-1747848122226-7660e7f29551?q=80&w=715&auto=format&fit=crop&ixlib=rb-4.1.0",
+  "https://plus.unsplash.com/premium_vector-1748205000114-86e7eb758212?q=80&w=1207&auto=format&fit=crop&ixlib=rb-4.1.0",
+  "https://images.unsplash.com/vector-1750426724736-56d459a42cc3?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0",
+  "https://plus.unsplash.com/premium_vector-1720440170692-f25c2a0a5f1d?q=80&w=582&auto=format&fit=crop&ixlib=rb-4.1.0",
+  "https://images.unsplash.com/vector-1750071844608-b380f333fed6?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0",
+  "https://images.unsplash.com/vector-1751354249052-d451c6f430a7?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0",
+  "https://plus.unsplash.com/premium_vector-1731850954598-9877f725c123?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0"
+];
+
+// Utility: Get fallback image by hashing the user ID
+const getFallbackImage = (userId) => {
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return placeholderImages[Math.abs(hash) % placeholderImages.length];
+};
 
 export default function ProfileView() {
   const { id } = useParams();
@@ -12,48 +37,47 @@ export default function ProfileView() {
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
-    // TODO: Fetch profile data using ID (for now, using mock data)
-    setProfile({
-      id,
-      name: "Emma",
-      age: 26,
-      gender: "Female",
-      location: "San Francisco, CA",
-      bio: "Adventure seeker who loves hiking and coffee dates...",
-      relationshipGoals: "Looking for a serious relationship",
-      hobbies: "Photography, Hiking, Reading, Cooking, Yoga",
-      interests: "Travel, Art, Music, Nature, Food",
-      education: "Masters in Marketing",
-      occupation: "Digital Marketing Manager",
-      eyeColor: "Green",
-      hairColor: "Brunette",
-      bodyType: "Athletic",
-      height: "5'6\"",
-      musicTaste: "Indie Rock, Jazz, Classical",
-      favoriteBooks: "The Alchemist, Pride and Prejudice, 1984",
-      images: [
-        "https://images.unsplash.com/photo-1494790108755-2616c4498674?w=600",
-        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=600",
-        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600",
-      ],
-    });
+    const fetchProfile = async () => {
+      try {
+        const docRef = doc(db, "users", id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setProfile(docSnap.data());
+        } else {
+          console.error("No such user found!");
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    };
+
+    if (id) {
+      fetchProfile();
+    }
   }, [id]);
 
   const handleSendMessage = () => navigate("/chat");
 
   if (!profile) return <p>Loading...</p>;
 
+  const fallbackImage = getFallbackImage(id);
+  const mainImage = profile.image || profile.images?.[0] || fallbackImage;
+
   return (
     <div className="profile-container">
       <div className="profile-header">
-        <img src={profile.images[0]} alt={profile.name} className="profile-image" />
+        <img src={mainImage} alt={profile.firstName} className="profile-image" />
         <div className="overlay" />
-        <button onClick={() => navigate(-1)} className="back-button border border-gray-300 px-3 py-1 text-sm rounded bg-white hover:bg-gray-100 flex items-center">
+        <button
+          onClick={() => navigate(-1)}
+          className="back-button border border-gray-300 px-3 py-1 text-sm rounded bg-white hover:bg-gray-100 flex items-center"
+        >
           <ArrowLeft className="w-4 h-4 mr-1" />
-          Back
+          
         </button>
         <div className="profile-overlay-text">
-          <h1>{profile.name}, {profile.age}</h1>
+          <h1>{profile.firstName} {profile.lastName}, {profile.age}</h1>
           <div className="location">
             <MapPin className="icon" />
             <span>{profile.location}</span>
@@ -79,10 +103,10 @@ export default function ProfileView() {
             <div className="info-section">
               <h3>Interests & Hobbies</h3>
               <div className="tags">
-                {profile.hobbies.split(", ").map((h, i) => <span key={i} className="tag lavender">{h}</span>)}
+                {profile.hobbies?.split(",").map((h, i) => <span key={i} className="tag lavender">{h.trim()}</span>)}
               </div>
               <div className="tags">
-                {profile.interests.split(", ").map((i, j) => <span key={j} className="tag mint">{i}</span>)}
+                {profile.interests?.split(",").map((i, j) => <span key={j} className="tag mint">{i.trim()}</span>)}
               </div>
             </div>
           </div>
@@ -104,7 +128,7 @@ export default function ProfileView() {
         <div className="card romantic-card">
           <h3>More Photos</h3>
           <div className="gallery">
-            {profile.images.slice(1).map((img, i) => (
+            {profile.images?.slice(1).map((img, i) => (
               <img key={i} src={img} alt={`Photo ${i + 2}`} className="gallery-img" />
             ))}
           </div>
@@ -113,10 +137,11 @@ export default function ProfileView() {
         <div className="message-button">
           <button onClick={handleSendMessage} className="romantic-button flex items-center px-4 py-2 rounded bg-pink-500 text-white hover:bg-pink-600">
             <MessageSquare className="w-5 h-5 mr-2" />
-            Send Message
+            
           </button>
         </div>
       </div>
     </div>
   );
 }
+

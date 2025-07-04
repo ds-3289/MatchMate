@@ -44,7 +44,8 @@ export default function AuthWrapper() {
     return () => unsubscribe();
   }, [navigate]);
 
-  if (status === "loading") return <div className="p-4">Loading...</div>;
+  if (status === "loading") return <LandingPage />;
+  // <div className="p-4">Loading...</div>;
   if (status === "no-user") return <LandingPage />;
   if (status === "no-profile") return <BioForm />;
   return <MatchesRoutes />;
