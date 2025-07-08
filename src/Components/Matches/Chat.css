@@ -1,145 +1,224 @@
 .chat-wrapper {
   display: flex;
   height: 90vh;
-  max-width: 1200px;
-  margin: auto;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
   overflow: hidden;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Segoe UI", sans-serif;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Sidebar */
 .chat-sidebar {
-  width: 280px;
-  background-color: #f9fafb;
-  border-right: 1px solid #e5e7eb;
+  width: 250px;
+  background-color: #fef1f5;
+  border-right: 1px solid #eee;
   padding: 1rem;
-  display: flex;
-  flex-direction: column;
   overflow-y: auto;
 }
 
 .chat-sidebar h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
   margin-bottom: 1rem;
-  color: #111827;
+  font-size: 1.2rem;
+  color: #e91e63;
 }
 
 .chat-user {
-  padding: 0.75rem 1rem;
+  padding: 10px;
+  margin-bottom: 8px;
   border-radius: 8px;
+  background-color: #fff;
   cursor: pointer;
-  font-weight: 500;
-  color: #374151;
   transition: background 0.2s ease;
 }
 
 .chat-user:hover {
-  background-color: #e5e7eb;
+  background-color: #ffe3ec;
 }
 
 .chat-user.active {
-  background-color: #dbeafe;
-  color: #1e3a8a;
+  background-color: #f8bbd0;
+  font-weight: bold;
 }
 
-/* Chat Window */
 .chat-window {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #fefefe;
-}
-
-.chat-placeholder {
-  margin: auto;
-  font-size: 1.125rem;
-  color: #9ca3af;
-  text-align: center;
+  background: #fff;
 }
 
 .chat-header {
   padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-  font-weight: 600;
-  color: #111827;
+  background-color: #fce4ec;
+  border-bottom: 1px solid #eee;
+  font-weight: bold;
+}
+
+.chat-placeholder {
+  margin: auto;
+  font-size: 1.1rem;
+  color: #999;
 }
 
 .chat-messages {
   flex: 1;
   padding: 1rem;
   overflow-y: auto;
-  background-color: #f9fafb;
+  background-color: #fafafa;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 10px;
 }
 
 .chat-bubble {
-  max-width: 70%;
-  padding: 0.6rem 1rem;
-  border-radius: 1.25rem;
+  max-width: 60%;
+  padding: 10px 15px;
+  border-radius: 20px;
+  line-height: 1.4;
   font-size: 0.95rem;
   word-wrap: break-word;
-  line-height: 1.4;
 }
 
-.chat-bubble.sent {
+.sent {
   align-self: flex-end;
-  background-color: #3b82f6;
-  color: white;
-  border-bottom-right-radius: 0.25rem;
+  background-color: #e1f5fe;
+  color: #01579b;
+  border-bottom-right-radius: 5px;
 }
 
-.chat-bubble.received {
+.received {
   align-self: flex-start;
-  background-color: #e5e7eb;
-  color: #111827;
-  border-bottom-left-radius: 0.25rem;
+  background-color: #fce4ec;
+  color: #880e4f;
+  border-bottom-left-radius: 5px;
 }
 
-/* Input */
 .chat-input {
   display: flex;
-  padding: 1rem;
-  border-top: 1px solid #e5e7eb;
-  background-color: white;
+  padding: 10px;
+  border-top: 1px solid #eee;
+  background-color: #fff;
 }
 
 .chat-input input {
   flex: 1;
-  padding: 0.6rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 9999px;
+  padding: 10px 15px;
+  border-radius: 25px;
+  border: 1px solid #ddd;
   outline: none;
   font-size: 1rem;
-  transition: border-color 0.2s;
-}
-
-.chat-input input:focus {
-  border-color: #3b82f6;
 }
 
 .chat-input button {
-  margin-left: 0.75rem;
-  background-color: #3b82f6;
-  color: white;
-  padding: 0.6rem 1rem;
+  background-color: #e91e63;
   border: none;
-  border-radius: 9999px;
+  color: white;
+  padding: 0 16px;
+  margin-left: 10px;
+  border-radius: 25px;
+  font-size: 1.2rem;
   cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  transition: background 0.2s ease;
 }
 
-.chat-input button:hover:not(:disabled) {
-  background-color: #2563eb;
+.chat-input button:hover {
+  background-color: #d81b60;
 }
 
-.chat-input button:disabled {
-  background-color: #93c5fd;
-  cursor: not-allowed;
+.login-warning {
+  margin: auto;
+  font-size: 1.2rem;
+  color: #555;
 }
+
+.emoji-toggle-btn {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  margin-right: 0.4rem;
+}
+
+.emoji-picker-wrapper {
+  position: absolute;
+  bottom: 60px;
+  z-index: 100;
+}
+
+/* Removes the red background on emoji hover/selection */
+/* .EmojiPickerReact .epr-emoji {
+  background: transparent !important;
+  border-radius: 0 !important;
+  transition: none !important;
+} */
+
+/* Optional: remove hover effect */
+/* .EmojiPickerReact .epr-emoji:hover {
+  background-color: transparent !important;
+} */
+
+/* Optional: shrink padding or spacing */
+/* .EmojiPickerReact .epr-body {
+  padding: 0.4rem !important;
+} */
+
+.EmojiPickerReact .epr-emoji:hover {
+  background-color: #f0f0f0 !important;
+  border-radius: 6px;
+}
+
+/* 🧼 Clean up emoji buttons (no red background) */
+.EmojiPickerReact .epr-emoji {
+  background: transparent !important;
+  border-radius: 0 !important;
+  transition: none !important;
+}
+
+.EmojiPickerReact .epr-emoji:hover {
+  background-color: transparent !important;
+}
+
+/* 🚫 Remove red background from recently used section */
+.EmojiPickerReact .epr-recent-emoji {
+  background-color: transparent !important;
+}
+
+/* 🚫 Remove background from category icons (like food, flags, etc.) */
+.EmojiPickerReact .epr-category-nav button {
+  background-color: transparent !important;
+}
+
+.EmojiPickerReact .epr-category-nav button:hover {
+  background-color: #f0f0f0 !important;
+  border-radius: 8px;
+}
+
+/* 🧭 Optional: hide active pink highlight on selected category */
+.EmojiPickerReact .epr-category-nav .epr-active {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 🗂 Remove background from search and header */
+.EmojiPickerReact .epr-search-container input {
+  background-color: #fff !important;
+  border: 1px solid #ddd !important;
+}
+
+.EmojiPickerReact .epr-header {
+  background: transparent !important;
+}
+
+/* 🧺 Optional cleanup */
+.EmojiPickerReact .epr-body,
+.EmojiPickerReact .epr-search-container,
+.EmojiPickerReact .epr-category-nav {
+  background: transparent !important;
+}
+
+/* .chat-input aside > div[class^="epr_"] {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border: none !important;
+} */
+
