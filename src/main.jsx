@@ -1,3 +1,10 @@
+window.global = window;
+import process from 'process';
+window.process = process;
+
+import { Buffer } from 'buffer';
+window.Buffer = Buffer;
+
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom'; 

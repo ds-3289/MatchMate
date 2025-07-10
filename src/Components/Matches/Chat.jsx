@@ -16,6 +16,8 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../../Firebase";
 import "./Chat.css";
+import useWebRTCCall from "./useWebRTCCall";
+
 
 const Chat = () => {
   const currentUser = auth.currentUser;
@@ -26,6 +28,15 @@ const Chat = () => {
   const messagesEndRef = useRef(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef();
+  const {
+  localStream,
+  remoteStream,
+  startCall,
+  answerCall,
+  endCall,
+  // inCall,
+} = useWebRTCCall(currentUser, selectedChat);
+
 
 
   useEffect(() => {
@@ -138,18 +149,6 @@ const Chat = () => {
   };
 }, []);
 
-// useEffect(() => {
-//   if (!showEmojiPicker) return;
-
-//   // Delay slightly to wait for DOM to render
-//   const timeout = setTimeout(() => {
-//     const emojis = document.querySelectorAll(".epr-emoji[title]");
-//     emojis.forEach((el) => el.removeAttribute("title"));
-//   }, 100);
-
-//   return () => clearTimeout(timeout);
-// }, [showEmojiPicker]);
-
 useEffect(() => {
   let intervalId;
 
@@ -214,6 +213,32 @@ useEffect(() => {
 };
 
 
+useEffect(() => {
+  const unsub = onSnapshot(
+    collection(db, "calls"),
+    (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        const call = change.doc.data();
+        if (
+          change.type === "added" &&
+          call.to === currentUser.uid &&
+          !call.answer
+        ) {
+          const accept = window.confirm(
+            `📞 ${call.from} is calling you (${call.type}). Accept?`
+          );
+          if (accept) {
+            answerCall({ ...call, id: change.doc.id });
+          }
+        }
+      });
+    },
+    (error) => console.error("Call listener error:", error)
+  );
+
+  return () => unsub();
+}, [currentUser]);
+
   return (
     <div className="chat-wrapper">
       <div className="chat-sidebar">
@@ -238,6 +263,16 @@ useEffect(() => {
           <>
             <div className="chat-header">
               <h3>{selectedChat.firstName || selectedChat.name}</h3>
+
+              <div className="call-buttons">
+                <button className="call-btn" onClick={() => startCall("audio")} title="Audio Call">
+                  📞
+                </button>
+                <button className="call-btn" onClick={() => startCall("video")} title="Video Call">
+                  📹
+                </button>
+              </div>
+
             </div>
             <div className="chat-messages">
               {messages.map((msg) => (
@@ -252,6 +287,17 @@ useEffect(() => {
               ))}
               <div ref={messagesEndRef} />
             </div>
+            {localStream && (
+            <div className="video-wrapper">
+              <video autoPlay muted playsInline ref={(el) => el && (el.srcObject = localStream)} />
+              {remoteStream && (
+                <video autoPlay playsInline ref={(el) => el && (el.srcObject = remoteStream)} />
+              )}
+              <button onClick={endCall} className="end-call-btn">❌ End</button>
+            </div>
+          )}
+
+
             <div className="chat-input">
                 <button
                 className="emoji-toggle-btn"
