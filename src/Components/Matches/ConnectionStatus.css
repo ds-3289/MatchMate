@@ -1,0 +1,97 @@
+.connection-status {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  border-radius: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 0 10px rgba(125, 211, 252, 0.1);
+  border: 1px solid #e0f2fe;
+}
+
+.status-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0284c7;
+}
+
+.status-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.status-searching {
+  color: #7e22ce;
+}
+
+.status-connected {
+  color: #16a34a;
+}
+
+.status-disconnected {
+  color: #6b7280;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-chatting {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pulse-dot {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  animation: pulse 1.5s infinite;
+}
+
+.pulse-dot.purple {
+  background-color: #a78bfa;
+}
+
+.pulse-dot.green {
+  background-color: #22c55e;
+}
+
+.chatting-label {
+  font-size: 0.875rem;
+  color: #6b21a8;
+  font-weight: 500;
+}
+
+.status-tip {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #bae6fd;
+}
+
+.tip-text {
+  font-size: 0.75rem;
+  background-color: #f0f9ff;
+  color: #0284c7;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}

@@ -34,6 +34,7 @@ const Chat = () => {
   startCall,
   answerCall,
   endCall,
+  callType,
   // inCall,
 } = useWebRTCCall(currentUser, selectedChat);
 
@@ -264,11 +265,11 @@ useEffect(() => {
             <div className="chat-header">
               <h3>{selectedChat.firstName || selectedChat.name}</h3>
 
-              <div className="call-buttons">
-                <button className="call-btn" onClick={() => startCall("audio")} title="Audio Call">
+              <div className="call-c-buttons">
+                <button className="call-c-btn" onClick={() => startCall("audio")} title="Audio Call">
                   📞
                 </button>
-                <button className="call-btn" onClick={() => startCall("video")} title="Video Call">
+                <button className="call-c-btn" onClick={() => startCall("video")} title="Video Call">
                   📹
                 </button>
               </div>
@@ -287,16 +288,29 @@ useEffect(() => {
               ))}
               <div ref={messagesEndRef} />
             </div>
-            {localStream && (
-            <div className="video-wrapper">
-              <video autoPlay muted playsInline ref={(el) => el && (el.srcObject = localStream)} />
-              {remoteStream && (
-                <video autoPlay playsInline ref={(el) => el && (el.srcObject = remoteStream)} />
-              )}
-              <button onClick={endCall} className="end-call-btn">❌ End</button>
-            </div>
-          )}
 
+            {localStream && (
+              <div className={`video-c-wrapper ${callType === "video" ? "video-call" : "audio-call"}`}>
+                {callType === "video" && remoteStream && (
+                  <video
+                    className="remote-c-video"
+                    autoPlay
+                    playsInline
+                    ref={(el) => el && (el.srcObject = remoteStream)}
+                  />
+                )}
+                {callType === "video" && (
+                  <video
+                    className="local-c-video"
+                    autoPlay
+                    muted
+                    playsInline
+                    ref={(el) => el && (el.srcObject = localStream)}
+                  />
+                )}
+                <button onClick={endCall} className="end-c-call-btn">❌ End</button>
+              </div>
+            )}
 
             <div className="chat-input">
                 <button

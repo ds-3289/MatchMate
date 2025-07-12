@@ -215,37 +215,12 @@
   background: transparent !important;
 }
 
-.video-wrapper {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  background: #1a1a1a;
-  padding: 1rem;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-  z-index: 999;
-  width: 220px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
+.end-c-call-btn {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 1001;
 
-.video-wrapper:hover {
-  transform: scale(1.02);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
-}
-
-.video-wrapper video {
-  width: 100%;
-  max-height: 150px;
-  border-radius: 12px;
-  margin: 0.5rem 0;
-  object-fit: cover;
-  background-color: #000;
-}
-
-.end-call-btn {
   background: #ff4c4c;
   color: white;
   border: none;
@@ -255,27 +230,18 @@
   font-weight: bold;
   font-size: 0.9rem;
   transition: background 0.3s ease, transform 0.2s ease;
-}
+} 
 
-.end-call-btn:hover {
+.end-c-call-btn:hover {
   background: #e60023;
   transform: scale(1.05);
 }
 
-.end-call-btn:active {
+.end-c-call-btn:active {
   transform: scale(0.95);
 }
 
-@media (max-width: 600px) {
-  .video-wrapper {
-    bottom: 1rem;
-    right: 1rem;
-    width: 90%;
-    max-width: 300px;
-  }
-}
-
-.call-buttons {
+.call-c-buttons {
   position: absolute; 
   top: 2rem;
   right: 2rem;
@@ -284,7 +250,7 @@
   z-index: 50;
 }
 
-.call-btn {
+.call-c-btn {
   background-color: #eceff4;
   color: white;
   border: none;
@@ -296,11 +262,70 @@
   transition: background 0.3s ease, transform 0.2s ease;
 }
 
-.call-btn:hover {
+.call-c-btn:hover {
   background-color: #f0f4fa; 
   transform: scale(1.05);
 }
 
-.call-btn:active {
+.call-c-btn:active {
   transform: scale(0.95);
+} 
+
+/* Shared wrapper */
+.video-c-wrapper {
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
 }
+
+/* VIDEO CALL (larger box with videos) */
+.video-c-wrapper.video-call {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: black;
+  
+}
+
+/* AUDIO CALL (small centered box) */
+.video-c-wrapper.audio-call {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 300px;
+  height: 150px;
+  transform: translate(-50%, -50%);
+  background: #111;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.video-c-wrapper.audio-call video {
+  display: none;
+}
+
+.remote-c-video {
+  width: 75vw;
+  height: 70vh;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.6);
+}
+
+.local-c-video {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  width: 180px;
+  height: 120px;
+  border-radius: 12px;
+  object-fit: cover;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+

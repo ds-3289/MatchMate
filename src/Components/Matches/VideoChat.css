@@ -1,0 +1,223 @@
+.video-d-chat-container {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #f3e8ff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+/* 
+.video-d-chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; 
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid #f3e8ff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+} */
+
+
+.video-d-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+    /* flex: 1;
+  min-height: 0; */
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .video-d-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.video-d-box {
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.remote-d-video {
+  background: linear-gradient(to bottom right, #f3e8ff, #fce7f3);
+}
+
+.local-d-video {
+  background: linear-gradient(to bottom right, #e0f2fe, #dbeafe);
+}
+
+.video-d-element {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* .video-d-placeholder {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} */
+
+
+.video-d-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* 
+.video-d-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow: hidden;
+} */
+
+.video-d-loading {
+  max-width: 90%;
+  text-align: center;
+  color: #6b21a8;
+}
+
+.spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 4px solid #e9d5ff;
+  border-top-color: #7c3aed;
+  border-radius: 9999px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.placeholder-avatar {
+  width: 5rem;
+  height: 5rem;
+  background-color: #e9d5ff;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.user-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #9333ea;
+}
+
+.video-d-label {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: rgba(99, 102, 241, 0.8);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.video-d-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom right, #bae6fd, #dbeafe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-d-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.video-d-toggle,
+.audio-d-toggle {
+  padding: 1rem;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+   outline: none;         
+  border: none;
+}
+
+.video-d-toggle.enabled {
+  background: linear-gradient(to right, #38bdf8, #3b82f6);
+  color: white;
+}
+
+.video-d-toggle.disabled {
+  background: linear-gradient(to right, #f87171, #ec4899);
+  color: white;
+}
+
+.audio-d-toggle.enabled {
+  background: linear-gradient(to right, #a78bfa, #ec4899);
+  color: white;
+}
+
+.audio-d-toggle.disabled {
+  background: linear-gradient(to right, #f87171, #ec4899);
+  color: white;
+}
+
+.icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.start-d-chat-btn,
+.end-d-chat-btn {
+  padding: 1rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  color: white;
+  outline: none;         
+  border: none;
+}
+
+.start-d-chat-btn {
+  background: linear-gradient(to right, #38bdf8, #a78bfa);
+  box-shadow: 0 4px 8px rgba(125, 211, 252, 0.5);
+}
+
+.start-d-chat-btn:disabled {
+  background: linear-gradient(to right, #d1d5db, #e5e7eb);
+  box-shadow: 0 4px 8px rgba(209, 213, 219, 0.5);
+}
+
+.end-d-chat-btn {
+  background: linear-gradient(to right, #f87171, #ec4899);
+  box-shadow: 0 4px 8px rgba(248, 113, 113, 0.5);
+}

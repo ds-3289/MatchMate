@@ -13,12 +13,15 @@ const useWebRTCCall = (currentUser, remoteUser) => {
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
   const [callId, setCallId] = useState(null);
+  const [callType, setCallType] = useState(null); // ✅ Track call type
+
   const peerRef = useRef(null);
   const hasSignaledAnswer = useRef(false);
-  const unsubscribeRef = useRef(null); // To store the Firestore unsubscribe function
+  const unsubscribeRef = useRef(null); // For Firestore unsubscribe
 
   const startCall = async (type = "video") => {
     try {
+      setCallType(type); // ✅ SET CALL TYPE
       console.log("📞 Starting call...");
       console.log("Caller:", currentUser?.uid);
       console.log("Receiver:", remoteUser?.id);
@@ -45,7 +48,7 @@ const useWebRTCCall = (currentUser, remoteUser) => {
             offer,
             from: currentUser.uid,
             to: remoteUser.id,
-            type,
+            type, // ✅ include type for receiver to know
           });
           console.log("✅ Offer saved to Firestore:", callRef.path);
         } catch (error) {
@@ -66,10 +69,14 @@ const useWebRTCCall = (currentUser, remoteUser) => {
         console.error("❌ Peer connection error:", err);
       });
 
-      // Set up Firestore listener for answer
       unsubscribeRef.current = onSnapshot(callRef, (snapshot) => {
         const data = snapshot.data();
-        if (data?.answer && !hasSignaledAnswer.current && peerRef.current && !peerRef.current.destroyed) {
+        if (
+          data?.answer &&
+          !hasSignaledAnswer.current &&
+          peerRef.current &&
+          !peerRef.current.destroyed
+        ) {
           try {
             console.log("📲 Received answer signal");
             peerRef.current.signal(data.answer);
@@ -87,7 +94,9 @@ const useWebRTCCall = (currentUser, remoteUser) => {
 
   const answerCall = async (incomingCallData) => {
     try {
+      setCallType(incomingCallData.type); // ✅ SET CALL TYPE
       console.log("📲 Answering call:", incomingCallData.id);
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: incomingCallData.type === "video",
         audio: true,
@@ -162,6 +171,7 @@ const useWebRTCCall = (currentUser, remoteUser) => {
       setCallId(null);
       setLocalStream(null);
       setRemoteStream(null);
+      setCallType(null); // ✅ Reset call type
       hasSignaledAnswer.current = false;
     } catch (err) {
       console.error("❌ Error ending call:", err);
@@ -174,6 +184,7 @@ const useWebRTCCall = (currentUser, remoteUser) => {
     startCall,
     answerCall,
     endCall,
+    callType, // ✅ Expose to Chat.jsx
   };
 };
 
