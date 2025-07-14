@@ -11,7 +11,7 @@ import { getAuth } from "firebase/auth";
 export default function BioForm() {
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", age: "", gender: "", location: "",
-    height: "", bodyType: "", eyeColor: "", hairColor: "",
+    height: "", weight: "", eyeColor: "", hairColor: "",
     occupation: "", education: "", interests: "", hobbies: "",
     musicTaste: "", favoriteBooks: "", bio: "", lookingFor: "", relationshipGoals: ""
   });
@@ -100,7 +100,7 @@ export default function BioForm() {
         return (
           <>
             {input("height", "Height", formData.height)}
-            {input("bodyType", "Body Type", formData.bodyType)}
+            {input("weight", "Weight", formData.weight)}
             {input("eyeColor", "Eye Color", formData.eyeColor)}
             {input("hairColor", "Hair Color", formData.hairColor)}
           </>
@@ -152,7 +152,7 @@ export default function BioForm() {
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
   const fetchUserData = async () => {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -167,9 +167,20 @@ export default function BioForm() {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        setFormData(docSnap.data());
+        const savedData = docSnap.data();
+
+        // Compare each field of savedData with default formData
+        const isDataMeaningful = Object.keys(savedData).some(
+          (key) => savedData[key] && savedData[key] !== ""
+        );
+
+        if (isDataMeaningful) {
+          setFormData(savedData); // Only load saved data if it's not just defaults
+        } else {
+          console.log("User data exists but is empty — showing blank form.");
+        }
       } else {
-        console.log("No profile data found, starting fresh.");
+        console.log("New user — no document found.");
       }
     } catch (error) {
       console.error("Failed to fetch profile data:", error);
@@ -179,6 +190,7 @@ export default function BioForm() {
 
   fetchUserData();
 }, []);
+
 
 
   return (

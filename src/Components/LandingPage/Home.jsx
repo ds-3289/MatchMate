@@ -1,6 +1,5 @@
 import React from 'react';
 import './Home.css'; 
-// import { Button } from "@/components/ui/button";
 import { Heart, Users, MessageCircle } from "lucide-react";
 
 export default function Home() {
@@ -27,8 +26,6 @@ export default function Home() {
         </p>
 
         <div className="home-buttons">
-          {/* <Button className="btn-primary">Get Started</Button> */}
-          {/* <Button variant="outline" className="btn-secondary">Learn More</Button> */}
         </div>
 
         {/* Floating Icons */}

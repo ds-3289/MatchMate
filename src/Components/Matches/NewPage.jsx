@@ -32,7 +32,22 @@ export default function NewPage() {
     "https://plus.unsplash.com/premium_vector-1720440170692-f25c2a0a5f1d?q=80&w=582&auto=format&fit=crop&ixlib=rb-4.1.0",
     "https://images.unsplash.com/vector-1750071844608-b380f333fed6?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0",
     "https://images.unsplash.com/vector-1751354249052-d451c6f430a7?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0",
-    "https://plus.unsplash.com/premium_vector-1731850954598-9877f725c123?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0"
+    "https://plus.unsplash.com/premium_vector-1731850954598-9877f725c123?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0",
+  "https://images.unsplash.com/vector-1752341240241-de940d7799ed?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://plus.unsplash.com/premium_vector-1723658879778-668cb248f351?q=80&w=2360&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://plus.unsplash.com/premium_vector-1730944647492-19d98f476e4b?q=80&w=2148&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://plus.unsplash.com/premium_vector-1723422046166-faafe3ce61cf?q=80&w=2360&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://images.unsplash.com/vector-1751482574434-ec51b921cf57?q=80&w=2360&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://plus.unsplash.com/premium_vector-1723658879778-668cb248f351?q=80&w=2360&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://plus.unsplash.com/premium_vector-1697729851630-345e9e19a2b3?q=80&w=972&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://plus.unsplash.com/premium_vector-1725994277561-1f2a9a66b04b?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://plus.unsplash.com/premium_vector-1741899809398-baa35dccef11?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://plus.unsplash.com/premium_vector-1723652267719-f5e134bbf9b5?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://plus.unsplash.com/premium_vector-1739352687644-2ec01fdf77a4?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://plus.unsplash.com/premium_vector-1728567177350-2abddc2f8ce1?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://plus.unsplash.com/premium_vector-1746432244561-698f141332e5?q=80&w=1178&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://plus.unsplash.com/premium_vector-1746884794173-c17cb1db2b75?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://plus.unsplash.com/premium_vector-1730931472622-3a86a06a8e89?q=80&w=816&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   ];
 
   const calculateMatchScore = (currentUser, candidate) => {
@@ -131,8 +146,8 @@ useEffect(() => {
       }
 
       // Step 3: Set states
-      setLikedUserIds(likedIds);       // All users the current user liked
-      setMatchedUserIds(matchedIds);   // Only those where match is mutual
+      setLikedUserIds(likedIds);     
+      setMatchedUserIds(matchedIds);   
 
     } catch (error) {
       console.error("Error fetching liked users:", error);

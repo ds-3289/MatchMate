@@ -1,27 +1,26 @@
-// src/firebase.js
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getAuth } from "firebase/auth";
-import { GoogleAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+// import { getStorage } from "firebase/storage";
 
-// ✅ Your Firebase config
+
 const firebaseConfig = {
-  apiKey: "AIzaSyBb7DusbmyJe69gKg2W5QqfYsSFrqr71u0",
-  authDomain: "matchmate-3289.firebaseapp.com",
-  projectId: "matchmate-3289",
-  storageBucket: "matchmate-3289.firebasestorage.app",
-  messagingSenderId: "812165814475",
-  appId: "1:812165814475:web:dc5ee4dc8fb9aed198a34e",
-  measurementId: "G-CVMCJMSCEW"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// ✅ Initialize Firebase
+
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
+// const storage = getStorage(app); 
 
-// ✅ Initialize and export Auth
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
-
+// export { storage }; 

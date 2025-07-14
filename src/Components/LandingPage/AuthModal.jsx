@@ -47,10 +47,8 @@ const AuthModal = ({ isOpen, mode, onClose, onSubmit }) => {
     const userDoc = await getDoc(userDocRef);
 
     if (userDoc.exists()) {
-      // ✅ Profile exists → go to /new
       navigate("/new");
     } else {
-      // 🚨 No profile → create user record and go to /bio
       await setDoc(userDocRef, {
         email: user.email,
         createdAt: new Date(),

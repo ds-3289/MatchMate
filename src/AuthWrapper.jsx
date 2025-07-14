@@ -1,13 +1,11 @@
-// src/AuthWrapper.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./Firebase";
 
-// Correct imports
 import LandingPage from "./Components/LandingPage/LandingPageRoutes.jsx";
-import BioForm from "./components/Bio/BioForm.jsx";
+import BioForm from "./Components/Bio/BioForm.jsx";
 import MatchesRoutes from "./Components/Matches/MatchesRoutes.jsx";
 
 export default function AuthWrapper() {
