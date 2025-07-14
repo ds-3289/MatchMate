@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import { getAuth, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { deleteUser } from "firebase/auth";
+import { doc, deleteDoc } from "firebase/firestore";
+import { db } from "../../Firebase"; 
+import { toast } from "sonner";
+
 
 import "./Settings.css";
 import {
@@ -37,9 +42,39 @@ export default function Settings() {
     setPrivacy((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleDeleteAccount = () => {
-    console.log("Account deletion requested");
-  };
+  const handleDeleteAccount = async () => {
+  const confirmed = window.confirm(
+    "Are you sure you want to delete your account?\n\nThis action is permanent and cannot be undone."
+  );
+
+  if (!confirmed) return;
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    toast.error("No user is currently logged in.");
+    return;
+  }
+
+  try {
+    // 1. Delete Firestore user document
+    await deleteDoc(doc(db, "users", user.uid));
+
+    // 2. Delete Firebase Auth user
+    await deleteUser(user);
+
+    toast.success("Your account has been permanently deleted.");
+    navigate("/"); // Redirect to homepage or login
+  } catch (error) {
+    console.error("Account deletion error:", error);
+    if (error.code === "auth/requires-recent-login") {
+      toast.error("Please re-authenticate to delete your account.");
+    } else {
+      toast.error("Failed to delete account. Please try again.");
+    }
+  }
+};
 
   const handleLogout = async () => {
     try {
@@ -77,7 +112,8 @@ export default function Settings() {
             </div>
 
             <div>
-              <button className="profile-edit-button">
+              <button className="profile-edit-button"
+              onClick={() => navigate("/bio")}>
                 <Edit3 className="button-icon" />
                 Edit Profile
               </button>
@@ -88,7 +124,7 @@ export default function Settings() {
           </div>
 
           {/* Notification Settings */}
-          <div className="romantic-card">
+          {/* <div className="romantic-card">
             <div className="section-header">
               <Bell className="icon" />
               <h2 className="section-title">Notifications</h2>
@@ -111,10 +147,10 @@ export default function Settings() {
                 />
               </div>
             ))}
-          </div>
+          </div> */}
 
           {/* Privacy Settings */}
-          <div className="romantic-card">
+          {/* <div className="romantic-card">
             <div className="section-header">
               <Shield className="icon" />
               <h2 className="section-title">Privacy & Visibility</h2>
@@ -136,7 +172,7 @@ export default function Settings() {
                 />
               </div>
             ))}
-          </div>
+          </div> */}
 
           {/* Account Actions */}
           <div className="romantic-card">

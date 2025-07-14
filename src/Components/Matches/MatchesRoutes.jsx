@@ -7,6 +7,8 @@ import Chat from "./Chat";
 import Settings from "./Settings";
 import ProfileView from "./ProfileView";
 import Navigation from "./Navigation";
+import BioForm from "../../Components/Bio/BioForm"; 
+
 
 export default function MatchesRoutes() {
   return (
@@ -18,6 +20,7 @@ export default function MatchesRoutes() {
         <Route path="chat" element={<Chat />} />
         <Route path="settings" element={<Settings />} />
         <Route path="profile/:id" element={<ProfileView />} />
+        <Route path="/bio" element={<BioForm />} />
       </Routes>
     </>
   );

@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState , useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./BioForm.css";
 import { Heart, User, Ruler, Book } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "../../Firebase"; 
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc , getDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+
 
 export default function BioForm() {
   const [formData, setFormData] = useState({
@@ -31,18 +32,6 @@ export default function BioForm() {
 
   const handleNext = () => setCurrentSection((s) => Math.min(s + 1, sections.length - 1));
   const handlePrevious = () => setCurrentSection((s) => Math.max(s - 1, 0));
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   try {
-  //     await new Promise((res) => setTimeout(res, 1000));
-  //     toast.success("Profile created successfully!");
-  //     navigate("/new");
-  //   } catch {
-  //     toast.error("Failed to save profile.");
-  //   }
-  // };
-
 
   const handleSubmit = async (e) => {
   e.preventDefault();
@@ -162,6 +151,35 @@ export default function BioForm() {
         return null;
     }
   };
+
+  useEffect(() => {
+  const fetchUserData = async () => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+      toast.error("You must be logged in to edit your profile.");
+      return;
+    }
+
+    try {
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        setFormData(docSnap.data());
+      } else {
+        console.log("No profile data found, starting fresh.");
+      }
+    } catch (error) {
+      console.error("Failed to fetch profile data:", error);
+      toast.error("Could not load your profile.");
+    }
+  };
+
+  fetchUserData();
+}, []);
+
 
   return (
     <div className="bio-container">
