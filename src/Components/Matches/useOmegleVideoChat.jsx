@@ -715,113 +715,290 @@
 
 
 
-const createPeer = (initiator, localStream) => {
-  const peer = new Peer({
-    initiator,
-    trickle: false,
-    stream: localStream,
-    config: {
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        {
-          urls: "turn:relay1.expressturn.com:3478",
-          username: "efR7uFZ6JhkkTxLN3A",
-          credential: "Fv4hN8aFkGXePYKL",
-        },
-      ],
-    },
-  });
+import { useEffect, useRef, useState } from 'react';
+import Peer from 'simple-peer';
+import { db } from '../../Firebase';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  setDoc,
+} from 'firebase/firestore';
 
-  // Add this flag to track if we've processed the signal
-  let hasProcessedSignal = false;
+export const useOmegleVideoChat = (userId) => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState(null); // Track errors
 
-  peer.on('stream', (stream) => {
-    if (remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = stream;
-    }
-  });
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const peerRef = useRef(null);
+  const localStreamRef = useRef(null);
+  const myDocRef = useRef(null);
+  const unsubQueue = useRef(null);
+  const unsubCalls = useRef(null);
+  const alreadyHandledCall = useRef(false);
+  const timeoutRef = useRef(null);
 
-  peer.on('connect', () => {
-    console.log('✅ Peer connected');
-    setIsConnected(true);
-    setIsSearching(false);
-    clearTimeout(timeoutRef.current);
-  });
+  // 🧹 Cleanup everything on unmount
+  useEffect(() => {
+    return () => cleanup();
+  }, []);
 
-  peer.on('error', (err) => {
-    console.error('❌ Peer error:', err);
-    cleanup();
-  });
-
-  peer.on('close', () => {
-    console.log('🔌 Peer connection closed');
-    cleanup();
-  });
-
-  // Modified signal handler with state checking
-  const originalSignal = peer.signal.bind(peer);
-  peer.signal = (data) => {
-    if (hasProcessedSignal) {
-      console.warn('⚠ Signal already processed, ignoring');
-      return;
-    }
+  // 🚀 Start searching for a chat partner
+  const startChat = async () => {
+    setIsSearching(true);
+    setError(null);
 
     try {
-      if (peer._pc && peer._pc.signalingState === 'closed') {
-        throw new Error('PeerConnection is closed');
+      // 🎥 Get user media (video + audio)
+      const localStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+
+      localStreamRef.current = localStream;
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = localStream;
       }
-      
-      originalSignal(data);
-      hasProcessedSignal = true;
+
+      // 📝 Add user to the queue
+      const queueRef = collection(db, 'omegleQueue');
+      const myDoc = await addDoc(queueRef, { userId, timestamp: Date.now() });
+      myDocRef.current = myDoc;
+
+      // 🔍 Listen for other users in the queue
+      unsubQueue.current = onSnapshot(queueRef, async (snapshot) => {
+        const others = snapshot.docs.filter((doc) => doc.id !== myDoc.id);
+        if (others.length > 0 && !alreadyHandledCall.current) {
+          alreadyHandledCall.current = true;
+
+          const otherDoc = others[0];
+          const otherUserId = otherDoc.data().userId;
+          const chatId = [userId, otherUserId].sort().join('-');
+          const callRef = doc(db, 'omegleCalls', chatId);
+
+          // 📞 Create peer as initiator
+          const peer = createPeer(true, localStream);
+
+          peer.on('signal', (signal) => {
+            setDoc(callRef, { offer: signal, from: userId });
+          });
+
+          // 🎯 Listen for answers
+          unsubCalls.current = onSnapshot(callRef, (snap) => {
+            const data = snap.data();
+            if (data?.answer && !peer.destroyed && !peer.connected) {
+              setTimeout(() => {
+                try {
+                  peer.signal(data.answer);
+                } catch (e) {
+                  console.error('❌ Failed to apply answer:', e);
+                  cleanup();
+                }
+              }, 100); // Small delay to avoid race conditions
+            }
+          });
+
+          peerRef.current = peer;
+
+          // 🗑 Remove from queue
+          await deleteDoc(myDoc);
+          unsubQueue.current && unsubQueue.current();
+        }
+      });
+
+      // 👂 Listen for incoming calls
+      listenForIncomingOffers(localStream);
+
+      // ⏱ Timeout after 20s if no match
+      timeoutRef.current = setTimeout(() => {
+        if (!isConnected) {
+          setError("No match found. Try again.");
+          cleanup();
+        }
+      }, 20000);
+
     } catch (err) {
-      console.error('❌ Error in signal processing:', err);
+      console.error('🚫 Error starting chat:', err);
+      setError("Could not access camera/microphone.");
       cleanup();
     }
   };
 
-  return peer;
-};
+  // 📡 Listen for incoming offers
+  const listenForIncomingOffers = (localStream) => {
+    const callsRef = collection(db, 'omegleCalls');
 
-const listenForIncomingOffers = (localStream) => {
-  const callsRef = collection(db, 'omegleCalls');
+    unsubCalls.current = onSnapshot(callsRef, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        const data = change.doc.data();
+        const chatId = change.doc.id;
 
-  unsubCalls.current = onSnapshot(callsRef, (snapshot) => {
-    snapshot.docChanges().forEach((change) => {
-      const data = change.doc.data();
-      const chatId = change.doc.id;
+        if (data?.offer && data?.from !== userId && !alreadyHandledCall.current) {
+          alreadyHandledCall.current = true;
 
-      if (data?.offer && data?.from !== userId && !alreadyHandledCall.current) {
-        alreadyHandledCall.current = true;
+          // 📞 Create peer as responder
+          const peer = createPeer(false, localStream);
 
-        const peer = createPeer(false, localStream);
+          peer.on('signal', (signal) => {
+            setDoc(
+              doc(db, 'omegleCalls', chatId),
+              { answer: signal, to: userId },
+              { merge: true }
+            );
+          });
 
-        peer.on('signal', (signal) => {
-          setDoc(
-            doc(db, 'omegleCalls', chatId),
-            {
-              ...data,
-              answer: signal,
-              to: userId,
-            },
-            { merge: true }
-          );
-        });
+          // Apply offer with slight delay
+          setTimeout(() => {
+            try {
+              peer.signal(data.offer);
+            } catch (e) {
+              console.error('❌ Failed to apply offer:', e);
+              cleanup();
+            }
+          }, 150);
 
-        // Add delay to ensure peer is properly initialized
-        setTimeout(() => {
-          try {
-            peer.signal(data.offer);
-          } catch (e) {
-            console.error('❌ Failed to apply offer:', e);
-            cleanup();
-          }
-        }, 100);
+          peerRef.current = peer;
 
-        peerRef.current = peer;
+          // Cleanup queue listener
+          if (unsubQueue.current) unsubQueue.current();
+          if (myDocRef.current) deleteDoc(myDocRef.current);
+        }
+      });
+    });
+  };
 
-        if (unsubQueue.current) unsubQueue.current();
-        if (myDocRef.current) deleteDoc(myDocRef.current);
+  // 🔌 Create a new WebRTC peer
+  const createPeer = (initiator, localStream) => {
+    const peer = new Peer({
+      initiator,
+      trickle: false,
+      stream: localStream,
+      config: {
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" }, // Backup STUN
+          {
+            urls: "turn:relay1.expressturn.com:3478",
+            username: "efR7uFZ6JhkkTxLN3A",
+            credential: "Fv4hN8aFkGXePYKL",
+          },
+        ],
+      },
+    });
+
+    let hasProcessedSignal = false;
+
+    // 🎥 Handle remote stream
+    peer.on('stream', (stream) => {
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = stream;
       }
     });
-  });
+
+    // ✅ Connection established
+    peer.on('connect', () => {
+      console.log('✅ Peer connected');
+      setIsConnected(true);
+      setIsSearching(false);
+      clearTimeout(timeoutRef.current);
+    });
+
+    // ❌ Error handling
+    peer.on('error', (err) => {
+      console.error('❌ Peer error:', err);
+      setError("Connection failed. Try again.");
+      cleanup();
+    });
+
+    // 🔌 Connection closed
+    peer.on('close', () => {
+      console.log('🔌 Peer connection closed');
+      cleanup();
+    });
+
+    // 🛠 Modified signal() with state checks
+    const originalSignal = peer.signal.bind(peer);
+    peer.signal = (data) => {
+      if (hasProcessedSignal) {
+        console.warn('⚠ Signal already processed, ignoring');
+        return;
+      }
+
+      try {
+        if (peer._pc && peer._pc.signalingState === 'closed') {
+          throw new Error('PeerConnection is closed');
+        }
+        originalSignal(data);
+        hasProcessedSignal = true;
+      } catch (err) {
+        console.error('❌ Signal error:', err);
+        cleanup();
+      }
+    };
+
+    return peer;
+  };
+
+  // 🛑 End the current chat
+  const endChat = () => {
+    cleanup();
+  };
+
+  // 🧹 Cleanup all resources
+  const cleanup = () => {
+    try {
+      if (peerRef.current) {
+        peerRef.current.destroy();
+        peerRef.current = null;
+      }
+
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => track.stop());
+        localStreamRef.current = null;
+      }
+
+      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+      if (localVideoRef.current) localVideoRef.current.srcObject = null;
+
+      if (myDocRef.current) {
+        deleteDoc(myDocRef.current).catch(() => {});
+        myDocRef.current = null;
+      }
+
+      if (unsubQueue.current) {
+        unsubQueue.current();
+        unsubQueue.current = null;
+      }
+
+      if (unsubCalls.current) {
+        unsubCalls.current();
+        unsubCalls.current = null;
+      }
+
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      alreadyHandledCall.current = false;
+      setIsConnected(false);
+      setIsSearching(false);
+    } catch (err) {
+      console.error('❌ Cleanup error:', err);
+    }
+  };
+
+  return {
+    startChat,
+    endChat,
+    isConnected,
+    isSearching,
+    error,
+    localVideoRef,
+    remoteVideoRef,
+  };
 };
