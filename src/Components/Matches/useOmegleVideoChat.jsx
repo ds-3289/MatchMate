@@ -296,6 +296,7 @@ export const useOmegleVideoChat = (userId) => {
   const [remoteStreamActive, setRemoteStreamActive] = useState(false);
   const MAX_RETRIES = 3;
 
+  // Refs
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerRef = useRef(null);
@@ -308,6 +309,7 @@ export const useOmegleVideoChat = (userId) => {
   const hasReceivedAnswer = useRef(false);
   const hasReceivedOffer = useRef(false);
   const connectionAttempts = useRef(0);
+  const retryTimeoutRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -332,6 +334,7 @@ export const useOmegleVideoChat = (userId) => {
       localStreamRef.current = localStream;
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = localStream;
+        localVideoRef.current.play().catch(e => console.error('Local video play error:', e));
       }
 
       console.log('Adding to queue...');
@@ -343,12 +346,25 @@ export const useOmegleVideoChat = (userId) => {
       myDocRef.current = myDoc;
 
       setConnectionStatus('searching');
+      
+      // Clear any existing timeout
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      
+      timeoutRef.current = setTimeout(() => {
+        if (!isConnected) {
+          console.log('Connection timeout reached');
+          setError('No match found. Try again.');
+          cleanup();
+        }
+      }, 20000);
+
       unsubQueue.current = onSnapshot(queueRef, async (snapshot) => {
         const others = snapshot.docs.filter((doc) => doc.id !== myDoc.id);
 
         if (others.length > 0 && !alreadyHandledCall.current) {
           console.log('Potential match found');
           alreadyHandledCall.current = true;
+          clearTimeout(timeoutRef.current);
 
           const otherDoc = others[0];
           const otherUserId = otherDoc.data().userId;
@@ -371,8 +387,8 @@ export const useOmegleVideoChat = (userId) => {
             const data = snap.data();
             if (
               data?.answer &&
+              peerRef.current === peer && // Ensure we're working with the current peer
               !peer.destroyed &&
-              peer._pc?.signalingState === 'have-local-offer' &&
               !hasReceivedAnswer.current
             ) {
               console.log('Received answer signal');
@@ -388,19 +404,15 @@ export const useOmegleVideoChat = (userId) => {
 
           peerRef.current = peer;
           await deleteDoc(myDoc);
-          unsubQueue.current && unsubQueue.current();
+          if (unsubQueue.current) {
+            unsubQueue.current();
+            unsubQueue.current = null;
+          }
         }
       });
 
       listenForIncomingOffers(localStream);
 
-      timeoutRef.current = setTimeout(() => {
-        if (!isConnected) {
-          console.log('Connection timeout reached');
-          setError('No match found. Try again.');
-          cleanup();
-        }
-      }, 20000);
     } catch (err) {
       console.error('Error starting chat:', err);
       setError('Could not access camera/microphone. Please check permissions.');
@@ -425,6 +437,7 @@ export const useOmegleVideoChat = (userId) => {
           console.log('Received incoming offer');
           alreadyHandledCall.current = true;
           hasReceivedOffer.current = true;
+          clearTimeout(timeoutRef.current);
 
           const peer = createPeer(false, localStream, chatId);
 
@@ -451,8 +464,14 @@ export const useOmegleVideoChat = (userId) => {
 
           peerRef.current = peer;
 
-          if (unsubQueue.current) unsubQueue.current();
-          if (myDocRef.current) deleteDoc(myDocRef.current).catch(() => {});
+          if (unsubQueue.current) {
+            unsubQueue.current();
+            unsubQueue.current = null;
+          }
+          if (myDocRef.current) {
+            deleteDoc(myDocRef.current).catch(() => {});
+            myDocRef.current = null;
+          }
         }
       });
     });
@@ -484,7 +503,11 @@ export const useOmegleVideoChat = (userId) => {
       setRemoteStreamActive(stream.active);
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = stream;
-        remoteVideoRef.current.play().catch(e => console.error('Video play error:', e));
+        remoteVideoRef.current.onloadedmetadata = () => {
+          remoteVideoRef.current.play().catch(e => {
+            console.error('Remote video play error:', e);
+          });
+        };
       }
     });
 
@@ -509,17 +532,9 @@ export const useOmegleVideoChat = (userId) => {
       cleanup();
     });
 
-    peer.on('signal', (data) => {
-      console.log('Signal event:', data.type);
-    });
-
     peer.on('iceConnectionStateChange', () => {
       console.log('ICE connection state:', peer.iceConnectionState);
       setConnectionStatus(peer.iceConnectionState);
-    });
-
-    peer.on('connectionStateChange', () => {
-      console.log('Connection state:', peer.connectionState);
     });
 
     return peer;
@@ -529,7 +544,11 @@ export const useOmegleVideoChat = (userId) => {
     if (retryCount < MAX_RETRIES) {
       console.log(`Retrying... (attempt ${retryCount + 1})`);
       setRetryCount((prev) => prev + 1);
-      setTimeout(() => {
+      
+      // Clear any existing retry timeout
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+      
+      retryTimeoutRef.current = setTimeout(() => {
         cleanup(true);
         startChat();
       }, 1000 * (retryCount + 1));
@@ -543,6 +562,10 @@ export const useOmegleVideoChat = (userId) => {
   const cleanup = (isRetry = false) => {
     try {
       console.log('Cleaning up...');
+      
+      // Clear all timeouts
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
       
       if (peerRef.current) {
         console.log('Destroying peer...');
@@ -581,11 +604,7 @@ export const useOmegleVideoChat = (userId) => {
         unsubCalls.current = null;
       }
 
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-
+      // Reset state flags
       alreadyHandledCall.current = false;
       hasReceivedAnswer.current = false;
       hasReceivedOffer.current = false;
