@@ -361,52 +361,84 @@ export const useOmegleVideoChat = (userId) => {
       unsubQueue.current = onSnapshot(queueRef, async (snapshot) => {
         const others = snapshot.docs.filter((doc) => doc.id !== myDoc.id);
 
+        console.log('[Omegle] Queue snapshot:', snapshot.docs.map(d => d.data()));
         if (others.length > 0 && !alreadyHandledCall.current) {
-          console.log('Potential match found');
-          alreadyHandledCall.current = true;
-          clearTimeout(timeoutRef.current);
-
-          const otherDoc = others[0];
+          // Find the first doc that is NOT yourself
+          const otherDoc = others.find(doc => doc.data().userId !== userId);
+          if (!otherDoc) {
+            console.log('[Omegle] No valid other user found (only myself in queue), waiting for next snapshot...');
+            return; // Wait for next snapshot
+          }
           const otherUserId = otherDoc.data().userId;
+          if (otherUserId === userId) {
+            console.log('[Omegle] Skipping match with myself, waiting for next snapshot...');
+            return;
+          }
           const chatId = [userId, otherUserId].sort().join('-');
           const callRef = doc(db, 'omegleCalls', chatId);
 
-          console.log('Creating peer as initiator...');
-          const peer = createPeer(true, localStream, chatId);
+          // Deterministic initiator/answerer selection
+          if (userId < otherUserId) {
+            // I am the initiator
+            console.log('[Omegle] I am the initiator', { userId, otherUserId });
+            alreadyHandledCall.current = true;
+            clearTimeout(timeoutRef.current);
 
-          peer.on('signal', (signal) => {
-            console.log('Sending offer signal...');
-            setDoc(callRef, {
-              offer: signal,
-              from: userId,
-              createdAt: Date.now(),
-            }).catch(err => console.error('Error sending offer:', err));
-          });
+            console.log('[Omegle] Creating peer as initiator...', { chatId, userId, otherUserId });
+            const peer = createPeer(true, localStream, chatId);
 
-          unsubCalls.current = onSnapshot(callRef, (snap) => {
-            const data = snap.data();
-            if (
-              data?.answer &&
-              peerRef.current === peer && // Ensure we're working with the current peer
-              !peer.destroyed &&
-              !hasReceivedAnswer.current
-            ) {
-              console.log('Received answer signal');
-              hasReceivedAnswer.current = true;
-              try {
-                peer.signal(data.answer);
-              } catch (err) {
-                console.error('Failed to process answer:', err);
-                handleRetry();
+            peer.on('signal', (signal) => {
+              console.log('[Omegle] Initiator sending offer signal to Firestore', signal);
+              setDoc(callRef, {
+                offer: signal,
+                from: userId,
+                createdAt: Date.now(),
+              }).catch(err => console.error('[Omegle] Error sending offer:', err));
+            });
+
+            unsubCalls.current = onSnapshot(callRef, (snap) => {
+              const data = snap.data();
+              console.log('[Omegle] Initiator callRef snapshot:', data);
+              if (
+                data?.answer &&
+                peerRef.current === peer && // Ensure we're working with the current peer
+                !peer.destroyed &&
+                !hasReceivedAnswer.current
+              ) {
+                console.log('[Omegle] Initiator received answer signal');
+                hasReceivedAnswer.current = true;
+                try {
+                  // Only signal if signalingState is 'have-local-offer'
+                  if (peer._pc && peer._pc.signalingState === 'have-local-offer') {
+                    peer.signal(data.answer);
+                  } else {
+                    console.warn('[Omegle] Not in have-local-offer state, skipping signal');
+                  }
+                } catch (err) {
+                  console.error('[Omegle] Failed to process answer:', err);
+                  handleRetry();
+                }
               }
-            }
-          });
+            });
 
-          peerRef.current = peer;
-          await deleteDoc(myDoc);
-          if (unsubQueue.current) {
-            unsubQueue.current();
-            unsubQueue.current = null;
+            peerRef.current = peer;
+            await deleteDoc(myDoc);
+            if (unsubQueue.current) {
+              unsubQueue.current();
+              unsubQueue.current = null;
+            }
+          } else {
+            // I am the answerer, just wait for the offer
+            console.log('[Omegle] I am the answerer, waiting for offer', { userId, otherUserId });
+            alreadyHandledCall.current = true;
+            clearTimeout(timeoutRef.current);
+            // No need to create peer or send offer here; handled in listenForIncomingOffers
+            // Remove self from queue
+            await deleteDoc(myDoc);
+            if (unsubQueue.current) {
+              unsubQueue.current();
+              unsubQueue.current = null;
+            }
           }
         }
       });
@@ -424,6 +456,7 @@ export const useOmegleVideoChat = (userId) => {
     const callsRef = collection(db, 'omegleCalls');
 
     unsubCalls.current = onSnapshot(callsRef, (snapshot) => {
+      console.log('[Omegle] Calls snapshot docChanges:', snapshot.docChanges().map(c => c.doc.data()));
       snapshot.docChanges().forEach((change) => {
         const data = change.doc.data();
         const chatId = change.doc.id;
@@ -434,7 +467,7 @@ export const useOmegleVideoChat = (userId) => {
           !alreadyHandledCall.current &&
           !hasReceivedOffer.current
         ) {
-          console.log('Received incoming offer');
+          console.log('[Omegle] Answerer received incoming offer', { chatId, from: data.from, to: userId });
           alreadyHandledCall.current = true;
           hasReceivedOffer.current = true;
           clearTimeout(timeoutRef.current);
@@ -442,7 +475,7 @@ export const useOmegleVideoChat = (userId) => {
           const peer = createPeer(false, localStream, chatId);
 
           peer.on('signal', (signal) => {
-            console.log('Sending answer signal...');
+            console.log('[Omegle] Answerer sending answer signal to Firestore', signal);
             setDoc(
               doc(db, 'omegleCalls', chatId),
               {
@@ -451,14 +484,19 @@ export const useOmegleVideoChat = (userId) => {
                 answeredAt: Date.now(),
               },
               { merge: true }
-            ).catch(err => console.error('Error sending answer:', err));
+            ).catch(err => console.error('[Omegle] Error sending answer:', err));
           });
 
           try {
-            console.log('Processing offer signal...');
-            peer.signal(data.offer);
+            console.log('[Omegle] Answerer processing offer signal...');
+            // Only signal if signalingState is 'stable'
+            if (peer._pc && peer._pc.signalingState === 'stable') {
+              peer.signal(data.offer);
+            } else {
+              console.warn('[Omegle] Not in stable state, skipping signal');
+            }
           } catch (err) {
-            console.error('Failed to process offer:', err);
+            console.error('[Omegle] Failed to process offer:', err);
             handleRetry();
           }
 
@@ -485,14 +523,14 @@ export const useOmegleVideoChat = (userId) => {
       stream: localStream,
       config: {
         iceServers: [
+          // Public STUN server for local/same-network testing
           { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-          {
-            urls: 'turn:relay1.expressturn.com:3478',
-            username: 'efR7uFZ6JhkkTxLN3A',
-            credential: 'Fv4hN8aFkGXePYKL',
-          },
+          // For production, add your TURN server credentials below:
+          // {
+          //   urls: 'turn:YOUR_TURN_URL',
+          //   username: 'YOUR_USERNAME',
+          //   credential: 'YOUR_CREDENTIAL'
+          // },
         ],
         iceCandidatePoolSize: 10,
       },
