@@ -363,82 +363,90 @@ export const useOmegleVideoChat = (userId) => {
 
         console.log('[Omegle] Queue snapshot:', snapshot.docs.map(d => d.data()));
         if (others.length > 0 && !alreadyHandledCall.current) {
-          // Find the first doc that is NOT yourself
-          const otherDoc = others.find(doc => doc.data().userId !== userId);
-          if (!otherDoc) {
-            console.log('[Omegle] No valid other user found (only myself in queue), waiting for next snapshot...');
-            return; // Wait for next snapshot
-          }
-          const otherUserId = otherDoc.data().userId;
-          if (otherUserId === userId) {
-            console.log('[Omegle] Skipping match with myself, waiting for next snapshot...');
-            return;
-          }
-          const chatId = [userId, otherUserId].sort().join('-');
-          const callRef = doc(db, 'omegleCalls', chatId);
+          // Include own doc for timestamp comparison
+          const allDocs = [myDoc, ...others];
+          // Map to {userId, timestamp, docId}
+          const queueUsers = allDocs.map(doc => ({
+            userId: doc.data().userId,
+            timestamp: doc.data().timestamp,
+            docId: doc.id
+          }));
+          // Sort by timestamp (earliest first)
+          queueUsers.sort((a, b) => a.timestamp - b.timestamp);
+          // Find my position
+          const myIndex = queueUsers.findIndex(u => u.userId === userId);
+          // If there are at least 2 users, match
+          if (queueUsers.length >= 2 && myIndex !== -1) {
+            const otherUser = queueUsers.find(u => u.userId !== userId);
+            const amInitiator = myIndex === 0; // First in queue is initiator
+            const otherUserId = otherUser.userId;
+            const chatId = [userId, otherUserId].sort().join('-');
+            const callRef = doc(db, 'omegleCalls', chatId);
+            if (amInitiator) {
+              // I am the initiator
+              console.log('[Omegle] I am the initiator (earliest in queue)', { userId, otherUserId });
+              alreadyHandledCall.current = true;
+              clearTimeout(timeoutRef.current);
 
-          // Deterministic initiator/answerer selection
-          if (userId < otherUserId) {
-            // I am the initiator
-            console.log('[Omegle] I am the initiator', { userId, otherUserId });
-            alreadyHandledCall.current = true;
-            clearTimeout(timeoutRef.current);
+              console.log('[Omegle] Creating peer as initiator...', { chatId, userId, otherUserId });
+              const peer = createPeer(true, localStream, chatId);
 
-            console.log('[Omegle] Creating peer as initiator...', { chatId, userId, otherUserId });
-            const peer = createPeer(true, localStream, chatId);
+              peer.on('signal', (signal) => {
+                console.log('[Omegle] Initiator sending offer signal to Firestore', signal);
+                setDoc(callRef, {
+                  offer: signal,
+                  from: userId,
+                  createdAt: Date.now(),
+                }).catch(err => console.error('[Omegle] Error sending offer:', err));
+              });
 
-            peer.on('signal', (signal) => {
-              console.log('[Omegle] Initiator sending offer signal to Firestore', signal);
-              setDoc(callRef, {
-                offer: signal,
-                from: userId,
-                createdAt: Date.now(),
-              }).catch(err => console.error('[Omegle] Error sending offer:', err));
-            });
-
-            unsubCalls.current = onSnapshot(callRef, (snap) => {
-              const data = snap.data();
-              console.log('[Omegle] Initiator callRef snapshot:', data);
-              if (
-                data?.answer &&
-                peerRef.current === peer && // Ensure we're working with the current peer
-                !peer.destroyed &&
-                !hasReceivedAnswer.current
-              ) {
-                console.log('[Omegle] Initiator received answer signal');
-                hasReceivedAnswer.current = true;
-                try {
-                  // Only signal if signalingState is 'have-local-offer'
-                  if (peer._pc && peer._pc.signalingState === 'have-local-offer') {
-                    peer.signal(data.answer);
-                  } else {
-                    console.warn('[Omegle] Not in have-local-offer state, skipping signal');
+              unsubCalls.current = onSnapshot(callRef, (snap) => {
+                const data = snap.data();
+                console.log('[Omegle] Initiator callRef snapshot:', data);
+                if (
+                  data?.answer &&
+                  peerRef.current === peer && // Ensure we're working with the current peer
+                  !peer.destroyed &&
+                  !hasReceivedAnswer.current
+                ) {
+                  console.log('[Omegle] Initiator received answer signal');
+                  hasReceivedAnswer.current = true;
+                  try {
+                    // Only signal if signalingState is 'have-local-offer'
+                    if (peer._pc && peer._pc.signalingState === 'have-local-offer') {
+                      peer.signal(data.answer);
+                    } else {
+                      console.warn('[Omegle] Not in have-local-offer state, skipping signal');
+                    }
+                  } catch (err) {
+                    console.error('[Omegle] Failed to process answer:', err);
+                    handleRetry();
                   }
-                } catch (err) {
-                  console.error('[Omegle] Failed to process answer:', err);
-                  handleRetry();
                 }
-              }
-            });
+              });
 
-            peerRef.current = peer;
-            await deleteDoc(myDoc);
-            if (unsubQueue.current) {
-              unsubQueue.current();
-              unsubQueue.current = null;
+              peerRef.current = peer;
+              await deleteDoc(myDoc);
+              if (unsubQueue.current) {
+                unsubQueue.current();
+                unsubQueue.current = null;
+              }
+            } else {
+              // I am the answerer
+              console.log('[Omegle] I am the answerer (joined after initiator), waiting for offer', { userId, otherUserId });
+              alreadyHandledCall.current = true;
+              clearTimeout(timeoutRef.current);
+              // No need to create peer or send offer here; handled in listenForIncomingOffers
+              // Remove self from queue
+              await deleteDoc(myDoc);
+              if (unsubQueue.current) {
+                unsubQueue.current();
+                unsubQueue.current = null;
+              }
             }
           } else {
-            // I am the answerer, just wait for the offer
-            console.log('[Omegle] I am the answerer, waiting for offer', { userId, otherUserId });
-            alreadyHandledCall.current = true;
-            clearTimeout(timeoutRef.current);
-            // No need to create peer or send offer here; handled in listenForIncomingOffers
-            // Remove self from queue
-            await deleteDoc(myDoc);
-            if (unsubQueue.current) {
-              unsubQueue.current();
-              unsubQueue.current = null;
-            }
+            console.log('[Omegle] Not enough users in queue or could not find my index, waiting for next snapshot...');
+            return;
           }
         }
       });
