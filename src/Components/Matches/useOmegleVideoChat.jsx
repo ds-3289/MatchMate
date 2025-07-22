@@ -375,15 +375,16 @@ export const useOmegleVideoChat = (userId) => {
           queueUsers.sort((a, b) => a.timestamp - b.timestamp);
           // Find my position
           const myIndex = queueUsers.findIndex(u => u.userId === userId);
+          console.log('[Omegle] Full queueUsers:', queueUsers);
+          console.log('[Omegle] My userId:', userId, 'myIndex:', myIndex);
           // If there are at least 2 users, match
           if (queueUsers.length >= 2 && myIndex !== -1) {
-            const otherUser = queueUsers.find(u => u.userId !== userId);
-            const amInitiator = myIndex === 0; // First in queue is initiator
-            const otherUserId = otherUser.userId;
-            const chatId = [userId, otherUserId].sort().join('-');
-            const callRef = doc(db, 'omegleCalls', chatId);
-            if (amInitiator) {
+            if (myIndex === 0) {
               // I am the initiator
+              const otherUser = queueUsers[1];
+              const otherUserId = otherUser.userId;
+              const chatId = [userId, otherUserId].sort().join('-');
+              const callRef = doc(db, 'omegleCalls', chatId);
               console.log('[Omegle] I am the initiator (earliest in queue)', { userId, otherUserId });
               alreadyHandledCall.current = true;
               clearTimeout(timeoutRef.current);
@@ -431,8 +432,11 @@ export const useOmegleVideoChat = (userId) => {
                 unsubQueue.current();
                 unsubQueue.current = null;
               }
-            } else {
+            } else if (myIndex === 1) {
               // I am the answerer
+              const otherUser = queueUsers[0];
+              const otherUserId = otherUser.userId;
+              const chatId = [userId, otherUserId].sort().join('-');
               console.log('[Omegle] I am the answerer (joined after initiator), waiting for offer', { userId, otherUserId });
               alreadyHandledCall.current = true;
               clearTimeout(timeoutRef.current);
@@ -443,6 +447,10 @@ export const useOmegleVideoChat = (userId) => {
                 unsubQueue.current();
                 unsubQueue.current = null;
               }
+            } else {
+              // More than 2 users in queue, or something went wrong
+              console.log('[Omegle] My index in queue is > 1, skipping this round. myIndex:', myIndex, 'queueUsers:', queueUsers);
+              return;
             }
           } else {
             console.log('[Omegle] Not enough users in queue or could not find my index, waiting for next snapshot...');
