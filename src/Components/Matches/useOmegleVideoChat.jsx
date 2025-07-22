@@ -363,8 +363,8 @@ export const useOmegleVideoChat = (userId) => {
 
         console.log('[Omegle] Queue snapshot:', snapshot.docs.map(d => d.data()));
         if (others.length > 0 && !alreadyHandledCall.current) {
-          // Include own doc for timestamp comparison
-          const allDocs = [myDoc, ...others];
+          // Use all queue docs (including your own) as DocumentSnapshots
+          const allDocs = snapshot.docs;
           // Map to {userId, timestamp, docId}
           const queueUsers = allDocs.map(doc => ({
             userId: doc.data().userId,
