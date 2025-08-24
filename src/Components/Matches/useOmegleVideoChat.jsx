@@ -35,6 +35,8 @@ export const useOmegleVideoChat = (userId) => {
   const connectionAttempts = useRef(0);
   const retryTimeoutRef = useRef(null);
   const connectionTimeoutRef = useRef(null);
+  const lastSignalTime = useRef(null);
+  const connectionProgress = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -247,14 +249,14 @@ export const useOmegleVideoChat = (userId) => {
       },
     });
 
-    // Set connection timeout
+    // Set connection timeout - increased to allow for TURN server negotiation
     connectionTimeoutRef.current = setTimeout(() => {
       if (peer && !peer.destroyed && !isConnected) {
         console.log('[Omegle] Connection timeout, destroying peer');
         peer.destroy();
         handleRetry();
       }
-    }, 15000); // 15 second connection timeout
+    }, 30000); // Increased to 30 seconds for TURN server negotiation
 
     peer.on('stream', (stream) => {
       console.log('[Omegle] Stream event received', stream);
@@ -298,6 +300,12 @@ export const useOmegleVideoChat = (userId) => {
       console.log('[Omegle] ICE connection state:', peer.iceConnectionState);
       setConnectionStatus(peer.iceConnectionState);
       
+      // Clear connection timeout when ICE connection is established
+      if (peer.iceConnectionState === 'connected' || peer.iceConnectionState === 'completed') {
+        console.log('[Omegle] ICE connection established, clearing timeout');
+        clearTimeout(connectionTimeoutRef.current);
+      }
+      
       // Handle failed ICE connections
       if (peer.iceConnectionState === 'failed' || peer.iceConnectionState === 'disconnected') {
         console.log('[Omegle] ICE connection failed/disconnected, retrying...');
@@ -311,6 +319,12 @@ export const useOmegleVideoChat = (userId) => {
       console.log('[Omegle] Connection state:', peer.connectionState);
       setConnectionStatus(peer.connectionState);
       
+      // Clear connection timeout when connection is established
+      if (peer.connectionState === 'connected') {
+        console.log('[Omegle] Connection established, clearing timeout');
+        clearTimeout(connectionTimeoutRef.current);
+      }
+      
       if (peer.connectionState === 'failed') {
         console.log('[Omegle] Connection failed, retrying...');
         clearTimeout(connectionTimeoutRef.current);
@@ -318,10 +332,52 @@ export const useOmegleVideoChat = (userId) => {
       }
     });
 
+    // Monitor signaling state changes
+    peer.on('signal', (signal) => {
+      console.log('[Omegle] Signal event:', signal.type);
+      lastSignalTime.current = Date.now();
+      connectionProgress.current = true;
+      
+      // Reset connection timeout when new signals are exchanged
+      if (connectionTimeoutRef.current) {
+        clearTimeout(connectionTimeoutRef.current);
+        connectionTimeoutRef.current = setTimeout(() => {
+          if (peer && !peer.destroyed && !isConnected) {
+            // Only timeout if no recent signal activity
+            const timeSinceLastSignal = Date.now() - (lastSignalTime.current || 0);
+            if (timeSinceLastSignal > 20000) { // 20 seconds since last signal
+              console.log('[Omegle] Connection timeout after signal, destroying peer');
+              peer.destroy();
+              handleRetry();
+            } else {
+              console.log('[Omegle] Connection still progressing, extending timeout');
+              // Extend timeout since connection is progressing
+              connectionTimeoutRef.current = setTimeout(() => {
+                if (peer && !peer.destroyed && !isConnected) {
+                  console.log('[Omegle] Final connection timeout, destroying peer');
+                  peer.destroy();
+                  handleRetry();
+                }
+              }, 20000);
+            }
+          }
+        }, 30000);
+      }
+    });
+
     return peer;
   };
 
   const handleRetry = () => {
+    // Don't retry if connection is progressing well
+    if (connectionProgress.current && lastSignalTime.current) {
+      const timeSinceLastSignal = Date.now() - lastSignalTime.current;
+      if (timeSinceLastSignal < 10000) { // Less than 10 seconds since last signal
+        console.log('[Omegle] Connection progressing well, not retrying');
+        return;
+      }
+    }
+    
     if (retryCount < MAX_RETRIES) {
       console.log(`[Omegle] Retrying... (attempt ${retryCount + 1}/${MAX_RETRIES})`);
       setRetryCount((prev) => prev + 1);
@@ -329,10 +385,12 @@ export const useOmegleVideoChat = (userId) => {
       // Clear any existing retry timeout
       if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
       
+      // More gradual backoff to allow for connection establishment
+      const backoffDelay = Math.min(5000 * (retryCount + 1), 15000); // Max 15 seconds
       retryTimeoutRef.current = setTimeout(() => {
         cleanup(true);
         startChat();
-      }, 2000 * (retryCount + 1)); // Exponential backoff
+      }, backoffDelay);
     } else {
       console.log('[Omegle] Max retries reached');
       setError('Max retries reached. Please refresh.');
@@ -397,6 +455,8 @@ export const useOmegleVideoChat = (userId) => {
       hasReceivedAnswer.current = false;
       hasReceivedOffer.current = false;
       setRemoteStreamActive(false);
+      lastSignalTime.current = null;
+      connectionProgress.current = false;
       
       if (!isRetry) {
         setIsConnected(false);
